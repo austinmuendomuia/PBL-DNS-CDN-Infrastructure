@@ -1,0 +1,14 @@
+$TTL 86400
+@   IN  SOA ns1.ozy.cns. hostmaster.ozy.cns. (
+        2026110401 3600 1800 604800 86400 )
+@       IN  NS      ns1.ozy.cns.
+
+; PTR Records
+10      IN  PTR     ns1.ozy.cns.
+20      IN  PTR     mail.ozy.cns.
+25      IN  PTR     mail2.ozy.cns.
+30      IN  PTR     nfs.ozy.cns.
+40      IN  PTR     ldap.ozy.cns.
+60      IN  PTR     sql.ozy.cns.
+70      IN  PTR     sqlslv1.ozy.cns.
+90      IN  PTR     www.ozy.cns.

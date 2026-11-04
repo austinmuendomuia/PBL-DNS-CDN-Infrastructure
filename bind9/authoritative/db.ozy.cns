@@ -1,0 +1,52 @@
+$TTL 86400
+@   IN  SOA ns1.ozy.cns. hostmaster.ozy.cns. (
+        2026110401 3600 1800 604800 86400 )
+
+@               IN  NS      ns1.ozy.cns.
+ns1             IN  A       192.168.56.10
+@               IN  A       192.168.56.10
+
+; ====================================================================
+; 1. COMPULSORY: Distributed Email System (Roy)
+; ====================================================================
+@               IN  MX  10  mail.ozy.cns.
+@               IN  MX  20  mail2.ozy.cns.
+mail            IN  A       192.168.56.20
+mail2           IN  A       192.168.56.25
+smtp            IN  CNAME   mail.ozy.cns.
+imap            IN  CNAME   mail.ozy.cns.
+webmail         IN  CNAME   mail.ozy.cns.
+
+; SPF & DKIM Records
+@               IN  TXT     "v=spf1 mx ip4:192.168.56.20 ip4:192.168.56.25 -all"
+default._domainkey IN TXT   "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7vbqajDw4o6gJy84NxT3FcR2eU3n9rQ9H0H7i8t9P"
+
+; ====================================================================
+; 2. COMPULSORY: ISP Core, IAM & Billing (Austin)
+; ====================================================================
+ldap            IN  A       192.168.56.40
+ldapslv         IN  A       192.168.56.50
+radius          IN  A       192.168.56.40
+billing         IN  A       192.168.56.45
+
+; ====================================================================
+; 3. COMPULSORY: ISP Access Network - GPON/EPON & WiFi (Joe)
+; ====================================================================
+olt             IN  A       192.168.56.48
+wifi            IN  A       192.168.56.49
+
+; ====================================================================
+; 4. ELECTIVE CDN: Origin Web & MySQL Database Clusters (Joy Ndira)
+; ====================================================================
+www             IN  A       192.168.56.90
+ww2             IN  A       192.168.56.20
+ww3             IN  A       192.168.56.30
+sql             IN  A       192.168.56.60
+sqlslv1         IN  A       192.168.56.70
+sqlslv2         IN  A       192.168.56.80
+
+; ====================================================================
+; 5. Previous Labs (File Sharing)
+; ====================================================================
+nfs             IN  A       192.168.56.30
+smb             IN  A       192.168.56.30
