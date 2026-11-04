@@ -1,0 +1,16 @@
+$TTL 86400
+.   IN  SOA root-ns.root. admin.root. (
+        2026110401 ; Serial
+        3600       ; Refresh
+        1800       ; Retry
+        604800     ; Expire
+        86400 )    ; Negative Cache TTL
+
+; Root Name Server
+.           IN  NS  root-ns.root.
+root-ns.root. IN A   10.10.1.2
+
+; Delegation for TLD: .cns
+cns.        IN  NS  tld-ns.cns.
+; Glue record for tld-ns.cns
+tld-ns.cns. IN  A   10.10.1.3

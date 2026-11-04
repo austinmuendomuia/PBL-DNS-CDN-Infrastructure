@@ -1,0 +1,3 @@
+; Custom Root Hints file for PBL Private DNS Tree
+.                       3600000      IN      NS    root-ns.root.
+root-ns.root.           3600000      IN      A     10.10.1.2

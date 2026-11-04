@@ -1,0 +1,14 @@
+options {
+    directory "/var/cache/bind";
+
+    // Root server is authoritative only - disable recursion
+    recursion no;
+    allow-query { any; };
+    listen-on { any; };
+    listen-on-v6 { none; };
+
+    // Standard authoritative security settings
+    allow-transfer { none; };
+    dnssec-validation no;
+    auth-nxdomain no;
+};

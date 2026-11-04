@@ -1,0 +1,5 @@
+// Use custom private root hints to traverse our lab DNS tree
+zone "." {
+    type hint;
+    file "/etc/bind/root.hints";
+};

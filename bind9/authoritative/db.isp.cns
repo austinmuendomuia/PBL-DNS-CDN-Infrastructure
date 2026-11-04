@@ -1,0 +1,62 @@
+$TTL 86400
+@   IN  SOA ns1.isp.cns. hostmaster.isp.cns. (
+        2026110401 ; Serial
+        3600       ; Refresh
+        1800       ; Retry
+        604800     ; Expire
+        86400 )    ; Minimum TTL
+
+; Authoritative Name Servers
+@               IN  NS      ns1.isp.cns.
+ns1             IN  A       10.10.1.4
+
+; ====================================================================
+; 1. COMPULSORY: Distributed Email System (Roy)
+; ====================================================================
+; MX Records prioritizing primary and secondary distributed MTAs
+@               IN  MX  10  mail1.isp.cns.
+@               IN  MX  20  mail2.isp.cns.
+
+mail1           IN  A       10.10.20.11
+mail2           IN  A       10.10.20.12
+smtp            IN  CNAME   mail1.isp.cns.
+imap            IN  CNAME   mail1.isp.cns.
+webmail         IN  CNAME   mail1.isp.cns.
+
+; SPF (Sender Policy Framework) - Only authorized MTAs can send mail
+@               IN  TXT     "v=spf1 mx ip4:10.10.20.11 ip4:10.10.20.12 -all"
+
+; DKIM (DomainKeys Identified Mail) Public Key Record
+default._domainkey IN TXT   "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7vbqajDw4o6gJy84NxT3FcR2eU3n9rQ9H0H7i8t9P"
+
+; DMARC Policy
+_dmarc          IN  TXT     "v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc-reports@isp.cns"
+
+; ====================================================================
+; 2. COMPULSORY: ISP Core, IAM & Accounting (Austin)
+; ====================================================================
+radius          IN  A       10.10.30.10
+ldap            IN  A       10.10.30.11
+iam             IN  CNAME   ldap.isp.cns.
+billing         IN  A       10.10.30.20
+portal          IN  CNAME   billing.isp.cns.
+
+; ====================================================================
+; 3. COMPULSORY: ISP Access Network - xPON & WiFi (Joe)
+; ====================================================================
+olt             IN  A       10.10.40.1
+gpon-core       IN  A       10.10.40.2
+wifi-portal     IN  A       10.10.40.10
+hotspot         IN  CNAME   wifi-portal.isp.cns.
+
+; ====================================================================
+; 4. ELECTIVE CDN: Origin Web & Database Clusters (Joy Ndira)
+; ====================================================================
+; Origin Load Balancer (HAProxy VIP)
+origin          IN  A       10.10.50.100
+app             IN  CNAME   origin.isp.cns.
+
+; Database Cluster (MySQL Primary Master & Replica)
+db-primary      IN  A       10.10.50.11
+db-replica      IN  A       10.10.50.12
+db              IN  CNAME   db-primary.isp.cns.

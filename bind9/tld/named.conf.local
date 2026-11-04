@@ -1,0 +1,4 @@
+zone "cns" {
+    type master;
+    file "/etc/bind/db.cns";
+};

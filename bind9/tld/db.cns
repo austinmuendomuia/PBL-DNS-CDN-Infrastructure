@@ -1,0 +1,19 @@
+$TTL 86400
+cns.    IN  SOA tld-ns.cns. admin.cns. (
+        2026110401 ; Serial
+        3600       ; Refresh
+        1800       ; Retry
+        604800     ; Expire
+        86400 )    ; Negative Cache TTL
+
+; TLD Nameserver
+cns.            IN  NS  tld-ns.cns.
+tld-ns.cns.     IN  A   10.10.1.3
+
+; Delegation for Core ISP & Compulsory Workstream (isp.cns)
+isp.cns.        IN  NS  ns1.isp.cns.
+ns1.isp.cns.    IN  A   10.10.1.4
+
+; Delegation for Content Delivery Network (cdn.cns)
+cdn.cns.        IN  NS  ns-geo.cdn.cns.
+ns-geo.cdn.cns. IN  A   10.10.1.5

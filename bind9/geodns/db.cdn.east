@@ -1,0 +1,18 @@
+$TTL 60
+@   IN  SOA ns-geo.cdn.cns. hostmaster.cdn.cns. (
+        2026110401 ; Serial
+        1800       ; Refresh
+        900        ; Retry
+        604800     ; Expire
+        60 )       ; Minimum TTL (60s for rapid edge failover)
+
+; Nameserver
+@               IN  NS      ns-geo.cdn.cns.
+ns-geo          IN  A       10.10.1.5
+
+; CDN Edge Steering: Region East points directly to Edge Cache Node 2
+@               IN  A       10.20.60.10
+edge            IN  A       10.20.60.10
+static          IN  CNAME   edge.cdn.cns.
+media           IN  CNAME   edge.cdn.cns.
+www             IN  CNAME   edge.cdn.cns.

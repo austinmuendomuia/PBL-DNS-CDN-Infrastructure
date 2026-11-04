@@ -1,0 +1,72 @@
+# Optional Single-VM Lab Runner for Debian
+# Spins up the entire 5-node DNS tree on a single Debian host using Docker
+version: '3.8'
+
+services:
+  root-ns:
+    image: internetsystemsconsortium/bind9:9.18
+    container_name: root-ns
+    networks:
+      dns-net:
+        ipv4_address: 10.10.1.2
+    volumes:
+      - ../bind9/root/named.conf.options:/etc/bind/named.conf.options:ro
+      - ../bind9/root/named.conf.local:/etc/bind/named.conf.local:ro
+      - ../bind9/root/db.root:/etc/bind/db.root:ro
+
+  tld-ns:
+    image: internetsystemsconsortium/bind9:9.18
+    container_name: tld-ns
+    networks:
+      dns-net:
+        ipv4_address: 10.10.1.3
+    volumes:
+      - ../bind9/tld/named.conf.options:/etc/bind/named.conf.options:ro
+      - ../bind9/tld/named.conf.local:/etc/bind/named.conf.local:ro
+      - ../bind9/tld/db.cns:/etc/bind/db.cns:ro
+
+  auth-ns:
+    image: internetsystemsconsortium/bind9:9.18
+    container_name: auth-ns
+    networks:
+      dns-net:
+        ipv4_address: 10.10.1.4
+    volumes:
+      - ../bind9/authoritative/named.conf.options:/etc/bind/named.conf.options:ro
+      - ../bind9/authoritative/named.conf.local:/etc/bind/named.conf.local:ro
+      - ../bind9/authoritative/db.isp.cns:/etc/bind/db.isp.cns:ro
+      - ../bind9/authoritative/db.10.10.20:/etc/bind/db.10.10.20:ro
+
+  geodns-ns:
+    image: internetsystemsconsortium/bind9:9.18
+    container_name: geodns-ns
+    networks:
+      dns-net:
+        ipv4_address: 10.10.1.5
+    volumes:
+      - ../bind9/geodns/named.conf.options:/etc/bind/named.conf.options:ro
+      - ../bind9/geodns/named.conf.local:/etc/bind/named.conf.local:ro
+      - ../bind9/geodns/db.cdn.west:/etc/bind/db.cdn.west:ro
+      - ../bind9/geodns/db.cdn.east:/etc/bind/db.cdn.east:ro
+      - ../bind9/geodns/db.cdn.default:/etc/bind/db.cdn.default:ro
+
+  resolver:
+    image: internetsystemsconsortium/bind9:9.18
+    container_name: resolver
+    networks:
+      dns-net:
+        ipv4_address: 10.10.1.10
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ../bind9/resolver/named.conf.options:/etc/bind/named.conf.options:ro
+      - ../bind9/resolver/named.conf.local:/etc/bind/named.conf.local:ro
+      - ../bind9/resolver/root.hints:/etc/bind/root.hints:ro
+
+networks:
+  dns-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.1.0/24

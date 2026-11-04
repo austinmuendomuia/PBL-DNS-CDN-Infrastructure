@@ -1,0 +1,17 @@
+options {
+    directory "/var/cache/bind";
+
+    // Enable full recursion for internal clients
+    recursion yes;
+    allow-recursion { 10.0.0.0/8; 192.168.0.0/16; 127.0.0.1; localhost; };
+    allow-query { any; };
+
+    listen-on { any; };
+    listen-on-v6 { none; };
+
+    // Do NOT forward out to Google or public internet for internal tree resolution
+    forwarders {};
+
+    dnssec-validation no;
+    auth-nxdomain no;
+};

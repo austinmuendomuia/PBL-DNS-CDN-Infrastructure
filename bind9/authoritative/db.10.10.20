@@ -1,0 +1,14 @@
+$TTL 86400
+@   IN  SOA ns1.isp.cns. hostmaster.isp.cns. (
+        2026110401 ; Serial
+        3600       ; Refresh
+        1800       ; Retry
+        604800     ; Expire
+        86400 )    ; Minimum TTL
+
+; Authoritative Nameserver
+@   IN  NS      ns1.isp.cns.
+
+; PTR Records for Email MTAs (Forward-Confirmed Reverse DNS)
+11  IN  PTR     mail1.isp.cns.
+12  IN  PTR     mail2.isp.cns.

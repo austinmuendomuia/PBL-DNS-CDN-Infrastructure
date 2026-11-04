@@ -1,0 +1,24 @@
+options {
+    directory "/var/cache/bind";
+
+    // Authoritative Geo-DNS - recursion disabled
+    recursion no;
+    allow-query { any; };
+    listen-on { any; };
+    listen-on-v6 { none; };
+
+    allow-transfer { none; };
+    dnssec-validation no;
+    auth-nxdomain no;
+};
+
+// Access Control Lists (ACLs) defining geographical/network regions
+acl "region_west" {
+    10.10.0.0/16;
+    192.168.10.0/24;
+};
+
+acl "region_east" {
+    10.20.0.0/16;
+    192.168.20.0/24;
+};

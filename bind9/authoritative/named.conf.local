@@ -1,0 +1,11 @@
+// Forward Zone for ISP Infrastructure & Compulsory Services
+zone "isp.cns" {
+    type master;
+    file "/etc/bind/db.isp.cns";
+};
+
+// Reverse Zone for Email Subnet (10.10.20.0/24) for PTR Authentication
+zone "20.10.10.in-addr.arpa" {
+    type master;
+    file "/etc/bind/db.10.10.20";
+};

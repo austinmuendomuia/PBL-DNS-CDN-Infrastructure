@@ -1,0 +1,41 @@
+// ====================================================================
+// View 1: Region West (Clients in 10.10.0.0/16 or 192.168.10.0/24)
+// Steers traffic to Edge Cache Node 1 (10.10.60.10)
+// ====================================================================
+view "region_west" {
+    match-clients { region_west; };
+    recursion no;
+
+    zone "cdn.cns" {
+        type master;
+        file "/etc/bind/db.cdn.west";
+    };
+};
+
+// ====================================================================
+// View 2: Region East (Clients in 10.20.0.0/16 or 192.168.20.0/24)
+// Steers traffic to Edge Cache Node 2 (10.20.60.10)
+// ====================================================================
+view "region_east" {
+    match-clients { region_east; };
+    recursion no;
+
+    zone "cdn.cns" {
+        type master;
+        file "/etc/bind/db.cdn.east";
+    };
+};
+
+// ====================================================================
+// View 3: Default / Global Anycast View (All other subnets)
+// Steers traffic to Anycast VIP (10.99.99.99) announced via BGP/FRR
+// ====================================================================
+view "default" {
+    match-clients { any; };
+    recursion no;
+
+    zone "cdn.cns" {
+        type master;
+        file "/etc/bind/db.cdn.default";
+    };
+};
