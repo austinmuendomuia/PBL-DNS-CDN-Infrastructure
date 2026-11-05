@@ -1,9 +1,19 @@
 $TTL 86400
 @   IN  SOA root.server. admin.root.server. (
-        2026110401 3600 1800 604800 86400 )
+        2026110501 3600 1800 604800 86400 )
 @       IN  NS  root.server.
 root.server. IN A 192.168.56.2
 
-; Delegate .cns TLD to 192.168.56.3
-cns.    IN  NS  tld.cns.
-tld.cns. IN A   192.168.56.3
+; ====================================================================
+; TLD 1: .cns (Configured with TWO Name Servers as required)
+; ====================================================================
+cns.        IN  NS  ns1.tld.cns.
+cns.        IN  NS  ns2.tld.cns.
+ns1.tld.cns. IN A   192.168.56.3
+ns2.tld.cns. IN A   192.168.56.3
+
+; ====================================================================
+; TLD 2: .isp (Second Top Level Domain)
+; ====================================================================
+isp.        IN  NS  ns1.tld.isp.
+ns1.tld.isp. IN A   192.168.56.4

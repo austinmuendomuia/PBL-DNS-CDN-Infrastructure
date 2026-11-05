@@ -1,0 +1,4 @@
+; Custom Root Hints file for PBL DNS Tree
+; Directs the recursive resolver to the custom Root server (.) at 192.168.56.2
+.                       3600000      NS    ROOT-SERVER.
+ROOT-SERVER.            3600000      A     192.168.56.2

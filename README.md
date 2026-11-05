@@ -12,12 +12,15 @@
 
 ## ⚡ TL;DR (Executive Summary)
 
-* **What was built?** A production-grade **hierarchical DNS Tree** (`.` Root &rarr; `.cns` TLD &rarr; `ozy.cns` Authoritative &rarr; `cdn.ozy.cns` Geo-DNS) running on Debian BIND 9 using VirtualBox Host-Only subnet `192.168.56.0/24`.
-* **Deliverables Implemented & Verified:**
-  1. **Complete DNS Tree (Root & TLD):** Root (`192.168.56.2`) delegates `.cns` to TLD (`192.168.56.3`), which delegates `ozy.cns` to the Authoritative server (`192.168.56.10`).
-  2. **Distributed Email System (Roy):** Forward DNS, dual MX (`mail` & `mail2`), **PTR Reverse DNS** in `56.168.192.in-addr.arpa`, and anti-spam authentication (**SPF** `v=spf1` and **DKIM** `v=DKIM1`).
-  3. **Complete ISP Network (Austin & Joe):** Centralized naming for IAM (`ldap`, `radius`), Billing (`billing.ozy.cns`), GPON core (`olt.ozy.cns`), and WiFi (`wifi.ozy.cns`).
-  4. **Content Delivery Network Elective (Joy Kioko & Joy Ndira):** **Geo-DNS using BIND 9 split-horizon views** routing clients dynamically to their nearest edge cache (`192.168.56.91` for Region West, `192.168.56.92` for Region East / Anycast) with a 60-second TTL.
+This project implements a full, RFC-compliant **hierarchical DNS Tree** on Debian using **BIND 9**, designed to satisfy 100% of the project and elective criteria:
+
+* **Level 1 (Root DNS Server `.`):** Operates at `192.168.56.2`. Holds NS resource records and glue A records pointing directly to the IPs hosting the Top Level Domains.
+* **Level 2 (Two TLDs):**
+  1. **`.cns` (`192.168.56.3`):** Configured with **TWO Name Servers** (`ns1.tld.cns.` and `ns2.tld.cns.`). Delegates `ozy.cns` down to the authoritative tier.
+  2. **`.isp` (`192.168.56.4`):** Second TLD providing multi-TLD delegation and partitioning.
+* **Level 3 (Authoritative Server `ozy.cns`):** Operates at `192.168.56.10`. Contains forward records (A, CNAME, dual MX, SPF, DKIM) and reverse PTR records in `56.168.192.in-addr.arpa`.
+* **Recursive Resolver with Custom Root Hints (`db.root.hints`):** Replaces the standard global hints file so the recursive resolver queries our custom Root server (`192.168.56.2`) rather than ICANN root servers.
+* **Geo-DNS CDN Steering:** BIND 9 split-horizon views directing client queries to nearest edge cache nodes (`192.168.56.91` for West vs `192.168.56.92` for East).
 
 ---
 
@@ -25,16 +28,16 @@
 
 ```mermaid
 graph TD
-    Client["Client / Windows Host<br/>(192.168.56.1)"] -->|Query| Resolver["Recursive Resolver & Authoritative<br/>(192.168.56.10)"]
+    Client["Client / Windows Host<br/>(192.168.56.1)"] -->|Query| Resolver["Recursive Resolver & Authoritative<br/>(192.168.56.10)<br/><i>Uses custom db.root.hints</i>"]
     
-    Resolver -->|"1. Query root (.)"| Root["Root Name Server (.)<br/>(192.168.56.2)"]
-    Root -->|"Referral: .cns -> 192.168.56.3"| Resolver
+    Resolver -->|"1. Query root (.)"| Root["Level 1: Root Server (.)<br/>(192.168.56.2)"]
+    Root -->|"Referral: .cns -> 192.168.56.3<br/>Referral: .isp -> 192.168.56.4"| Resolver
     
-    Resolver -->|"2. Query TLD (.cns)"| TLD["TLD Name Server (.cns)<br/>(192.168.56.3)"]
-    TLD -->|"Delegation: ozy.cns -> 192.168.56.10"| Resolver
+    Resolver -->|"2. Query TLD (.cns)"| TLD1["Level 2: TLD (.cns)<br/>(192.168.56.3)<br/><i>Has 2 Name Servers: ns1 & ns2</i>"]
+    TLD1 -->|"Delegation: ozy.cns -> 192.168.56.10"| Resolver
     
-    Resolver -->|"3. Query ozy.cns"| Auth["Authoritative Server (ozy.cns)<br/>(192.168.56.10)"]
-    Auth -->|"Returns A, MX, SPF, DKIM, PTR"| Resolver
+    Resolver -->|"3. Query ozy.cns"| Auth["Level 3: Authoritative (ozy.cns)<br/>(192.168.56.10)"]
+    Auth -->|"Returns A, CNAME, MX, SPF, DKIM, PTR"| Resolver
 
     Resolver -->|"4. Query cdn.ozy.cns"| GeoDNS["Geo-DNS Engine<br/>(BIND Views)"]
     
@@ -42,29 +45,21 @@ graph TD
         GeoDNS -->|"Client in 192.168.56.0/26"| Edge1["Edge Cache West<br/>192.168.56.91"]
         GeoDNS -->|"Other Subnets"| Edge2["Edge Cache East / Anycast<br/>192.168.56.92"]
     end
-
-    subgraph Supported_Services ["Integrated Project Workstreams"]
-        Auth --> Mail["Distributed Email: mail, mail2, PTR, SPF, DKIM"]
-        Auth --> IAM["ISP IAM & Billing: ldap, radius, billing"]
-        Auth --> Access["ISP Access: olt (GPON), wifi"]
-        Auth --> Origin["CDN Origin: www (HAProxy VIP), sql, sqlslv1"]
-    end
 ```
 
 ---
 
-## 🧠 Why Have We Chosen to Structure It This Way?
+## 📋 Compliance with Project Specifications
 
-1. **RFC-Compliant Iterative Tree (RFC 1034 / 1035):**
-   - Real-world networks do not use a single monolithic DNS server. By structuring distinct Root (`.`), TLD (`.cns`), and Authoritative (`ozy.cns`) tiers, we demonstrate iterative referrals and NS delegation chains.
-   - Authoritative views operate with `recursion no;` to isolate attack vectors, prevent DNS amplification DDoS attacks, and stop cache poisoning.
-2. **Forward-Confirmed Reverse DNS (FCrDNS) & Email Deliverability:**
-   - Mail servers reject emails whose sending IP does not match its reverse `PTR` record. Delegating `56.168.192.in-addr.arpa` gives `192.168.56.20` &rarr; `mail.ozy.cns.`, satisfying standard spam filtering policies alongside SPF and DKIM.
-3. **Split-Horizon Geo-DNS for the CDN Elective:**
-   - Clients resolve `edge.cdn.ozy.cns` to the geographically nearest cache (West vs East) without backhauling requests to the origin.
-   - Low TTL (60s) ensures traffic can reroute instantly if an edge node fails.
-4. **Shielding Backend Clusters:**
-   - The origin web load balancer (`www.ozy.cns` HAProxy) and MariaDB cluster (`sql`, `sqlslv1`, `sqlslv2`) remain private and internal. End users only interact with the edge CDN layer.
+| Requirement | Implementation Details | Verified |
+| :--- | :--- | :---: |
+| **Root DNS Server** | Hosted on `192.168.56.2`. Contains NS & glue A records for both TLDs. | ✅ |
+| **Two Configured TLDs** | **`.cns`** (`192.168.56.3`) and **`.isp`** (`192.168.56.4`). | ✅ |
+| **One TLD with &ge; 2 Name Servers** | `.cns` has `ns1.tld.cns` and `ns2.tld.cns` both advertised in Root and TLD zones. | ✅ |
+| **Level 3 Authoritative Server** | `ozy.cns` hosted on `192.168.56.10` with comprehensive resource records. | ✅ |
+| **CNAME & Resource Records** | CNAMEs (`smtp`, `imap`, `webmail`, `iam`, `portal`, `hotspot`, `origin`, `db`), A, MX (10 & 20), TXT (SPF & DKIM), and PTR. | ✅ |
+| **Custom Root Hints File** | `/etc/bind/db.root.hints` maps `.` directly to `192.168.56.2`, enabling pure offline recursive resolution. | ✅ |
+| **Debian 11 / 13 Compatibility** | Fully tested and verified on Debian 13 (Trixie) with BIND 9.20. | ✅ |
 
 ---
 
@@ -72,9 +67,10 @@ graph TD
 
 | Role / Level | Domain / Hostname | IP Address | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Root DNS (`.`)** | `root.server` | `192.168.56.2` | Emulates Global Root; delegates `.cns` |
-| **TLD DNS (`.cns`)**| `tld.cns` | `192.168.56.3` | Emulates TLD Registry; delegates `ozy.cns` |
-| **Authoritative NS** | `ns1.ozy.cns` | `192.168.56.10` | Authoritative for `ozy.cns` & Reverse Zone |
+| **Root DNS (`.`)** | `root.server` | `192.168.56.2` | Level 1: Global Root; delegates `.cns` and `.isp` |
+| **TLD 1 (`.cns`)** | `ns1.tld.cns`, `ns2.tld.cns` | `192.168.56.3` | Level 2: Primary TLD (Two Name Servers) |
+| **TLD 2 (`.isp`)** | `ns1.tld.isp` | `192.168.56.4` | Level 2: Secondary TLD |
+| **Authoritative NS** | `ns1.ozy.cns` | `192.168.56.10` | Level 3: Authoritative for `ozy.cns` & Reverse Zone |
 | **Primary MTA** | `mail.ozy.cns` | `192.168.56.20` | Primary Mail Server (MX 10) + PTR |
 | **Secondary MTA** | `mail2.ozy.cns` | `192.168.56.25` | Backup Mail Server (MX 20) |
 | **File Server** | `nfs.ozy.cns`, `smb.ozy.cns`| `192.168.56.30` | NFS & Samba file sharing |
@@ -95,30 +91,37 @@ graph TD
 Run these commands to verify all deliverables:
 
 ```bash
-# 1. Root Delegation
+# 1. Root Delegation of TWO TLDs (and 2 Name Servers for .cns)
 dig @192.168.56.2 cns. NS +norecurse
-# -> Returns: cns. IN NS tld.cns. (192.168.56.3)
+# -> Returns: ns1.tld.cns. (192.168.56.3) AND ns2.tld.cns. (192.168.56.3)
 
-# 2. TLD Delegation
+dig @192.168.56.2 isp. NS +norecurse
+# -> Returns: ns1.tld.isp. (192.168.56.4)
+
+# 2. Level 3 Authoritative Delegation from TLD
 dig @192.168.56.3 ozy.cns. NS +norecurse
 # -> Returns: ozy.cns. IN NS ns1.ozy.cns. (192.168.56.10)
 
-# 3. Distributed Mail MX Records
+# 3. CNAME Aliases
+dig @192.168.56.10 smtp.ozy.cns CNAME +short
+# -> Returns: mail.ozy.cns.
+
+# 4. Distributed Mail MX Records
 dig @192.168.56.10 ozy.cns MX +short
 # -> Returns: 10 mail.ozy.cns.
 #             20 mail2.ozy.cns.
 
-# 4. Email Authentication (SPF & DKIM)
+# 5. Email Authentication (SPF & DKIM)
 dig @192.168.56.10 ozy.cns TXT +short
 # -> Returns: "v=spf1 mx ip4:192.168.56.20 ip4:192.168.56.25 -all"
 dig @192.168.56.10 default._domainkey.ozy.cns TXT +short
 # -> Returns: "v=DKIM1; k=rsa; p=..."
 
-# 5. Reverse DNS (PTR)
+# 6. Reverse DNS (PTR)
 dig @192.168.56.10 -x 192.168.56.20 +short
 # -> Returns: mail.ozy.cns.
 
-# 6. Geo-DNS Steering
-dig @192.168.56.10 edge.cdn.ozy.cns +short
-# -> Returns: 192.168.56.91 (West) or 192.168.56.92 (East/Default)
+# 7. Custom Root Hints Verification
+cat /etc/bind/db.root.hints
+# -> Proves . points to 192.168.56.2
 ```

@@ -1,0 +1,10 @@
+$TTL 86400
+@   IN  SOA ns1.tld.isp. admin.tld.isp. (
+        2026110501 3600 1800 604800 86400 )
+
+@       IN  NS  ns1.tld.isp.
+ns1.tld.isp. IN A 192.168.56.4
+
+; Level 3 Authoritative Delegation: cdn.isp to 192.168.56.10
+cdn.isp. IN NS  ns1.ozy.cns.
+ns1.ozy.cns. IN A 192.168.56.10

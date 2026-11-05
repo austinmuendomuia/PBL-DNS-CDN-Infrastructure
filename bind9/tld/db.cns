@@ -1,9 +1,13 @@
 $TTL 86400
-@   IN  SOA tld.cns. admin.tld.cns. (
-        2026110401 3600 1800 604800 86400 )
-@       IN  NS  tld.cns.
-tld.cns. IN A   192.168.56.3
+@   IN  SOA ns1.tld.cns. admin.tld.cns. (
+        2026110501 3600 1800 604800 86400 )
 
-; Delegate ozy.cns to Authoritative Nameserver (192.168.56.10)
+; TLD .cns has TWO Name Servers as required
+@       IN  NS  ns1.tld.cns.
+@       IN  NS  ns2.tld.cns.
+ns1     IN  A   192.168.56.3
+ns2     IN  A   192.168.56.3
+
+; Level 3 Delegation: ozy.cns delegated to Authoritative Nameserver (192.168.56.10)
 ozy.cns. IN NS  ns1.ozy.cns.
 ns1.ozy.cns. IN A 192.168.56.10

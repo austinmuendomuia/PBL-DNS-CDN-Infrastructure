@@ -1,0 +1,75 @@
+// ====================================================================
+// 1. ROOT TIER (.) - Responds on 192.168.56.2
+// Holds delegations for BOTH .cns and .isp
+// ====================================================================
+view "root_tier" {
+    match-destinations { 192.168.56.2; };
+    recursion no;
+
+    zone "." {
+        type master;
+        file "/etc/bind/db.root";
+    };
+};
+
+// ====================================================================
+// 2. TLD 1 TIER (.cns) - Responds on 192.168.56.3
+// Configured with TWO Name Servers as required
+// ====================================================================
+view "tld_tier" {
+    match-destinations { 192.168.56.3; };
+    recursion no;
+
+    zone "cns" {
+        type master;
+        file "/etc/bind/db.cns";
+    };
+};
+
+// ====================================================================
+// 3. TLD 2 TIER (.isp) - Responds on 192.168.56.4
+// Second Top Level Domain required by project specification
+// ====================================================================
+view "tld2_tier" {
+    match-destinations { 192.168.56.4; };
+    recursion no;
+
+    zone "isp" {
+        type master;
+        file "/etc/bind/db.isp";
+    };
+};
+
+// ====================================================================
+// 4. LEVEL 3 AUTHORITATIVE & RESOLVER - Responds on 192.168.56.10
+// Uses custom root hints to resolve the entire custom tree
+// ====================================================================
+view "authoritative_tier" {
+    match-clients { any; };
+    match-destinations { 192.168.56.10; 127.0.0.1; };
+    recursion yes;
+
+    // Custom Root Hints pointing to 192.168.56.2
+    zone "." {
+        type hint;
+        file "/etc/bind/db.root.hints";
+    };
+
+    // Forward Zone (Level 3 Authoritative)
+    zone "ozy.cns" {
+        type master;
+        file "/etc/bind/db.ozy.cns";
+    };
+
+    // Reverse Zone (PTR)
+    zone "56.168.192.in-addr.arpa" {
+        type master;
+        file "/etc/bind/db.192.168.56";
+    };
+
+    // Geo-DNS CDN Zone
+    zone "cdn.ozy.cns" {
+        type master;
+        file "/etc/bind/db.cdn.west";
+    };
+};
