@@ -1,19 +1,18 @@
 $TTL 86400
-@   IN  SOA root.server. admin.root.server. (
-        2026110501 3600 1800 604800 86400 )
-@       IN  NS  root.server.
-root.server. IN A 192.168.56.2
+@   IN  SOA ns1.root. admin.root. ( 2026111001 3600 1800 604800 86400 )
 
-; ====================================================================
-; TLD 1: .cns (Configured with TWO Name Servers as required)
-; ====================================================================
-cns.        IN  NS  ns1.tld.cns.
-cns.        IN  NS  ns2.tld.cns.
-ns1.tld.cns. IN A   192.168.56.3
-ns2.tld.cns. IN A   192.168.56.3
+; Root Name Servers (Primary VM 1: .30 & Secondary VM 2: .90)
+@           IN  NS  ns1.root.
+@           IN  NS  ns2.root.
+ns1.root.   IN  A   192.168.56.30
+ns2.root.   IN  A   192.168.56.90
 
-; ====================================================================
-; TLD 2: .isp (Second Top Level Domain)
-; ====================================================================
-isp.        IN  NS  ns1.tld.isp.
-ns1.tld.isp. IN A   192.168.56.4
+; TLD 1: .cns (Delegated to VM 3: .40 and VM 4: .50 - Two Name Servers)
+cns.        IN  NS  ns1.cns.
+cns.        IN  NS  ns2.cns.
+ns1.cns.    IN  A   192.168.56.40
+ns2.cns.    IN  A   192.168.56.50
+
+; TLD 2: .isp (Delegated to VM 5: .80)
+isp.        IN  NS  ns1.isp.
+ns1.isp.    IN  A   192.168.56.80
